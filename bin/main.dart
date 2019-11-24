@@ -1,52 +1,40 @@
 import 'package:teledart/teledart.dart';
 import 'package:teledart/telegram.dart';
-import 'package:teledart/model.dart';
-import 'package:http/http.dart' as http;
 import 'dart:convert';
 
+import 'package:TelegramBot/token.dart' as token;
+import 'package:TelegramBot/TelegramBot.dart';
+
+const String url = "http://172.20.22.87:5000";
+const TOKEN = token.token;
+const List<int> allwedCharacters = [45,46,44,63,33,113,119,101,114,116,121,117,105,111,112,97,115,100,102,103,104,106,107,108,122,120,99,118,98,110,109,81,87,69,82,84,89,85,73,79,80,83,68,70,71,72,74,75,76,58,90,88,67,86,66,78,77];
+
 main(List<String> arguments) {
- 
-  var TOKEN = "1066697640:AAEd1o4HYriYTgeAI0ZTsJgWIzX5-o0JlZo";
-  
-    List<int> charachters = [1105, 1025, 1081, 1094, 1091, 1082, 1077, 1085, 1075, 1096, 1097, 1079, 1093, 1098, 1092, 1099, 1074,
-			    1072, 1087, 1088, 1083, 1076, 1078, 1101, 1103, 1095, 1089, 1084, 1080, 1090, 1100, 1073, 1102, 1049, 1062, 
-			    1059, 1050, 1045, 1053, 1043, 1064, 1065, 1047, 1061, 1066, 1060, 1067, 1042, 1040, 1055, 1056, 1054, 1051, 1044, 
-			    1046, 1069, 1071, 1063, 1057, 1052, 1048, 1058, 1068, 1041, 1070] + [46, 44, 45, 33, 63] + [48, 49, 50, 51, 52, 53, 54, 55, 56, 57];
-
-
   TeleDart teledart = TeleDart(Telegram(TOKEN), Event());
   teledart.start().then((me) => print('${me.username} is initialised'));
   teledart
-      .onCommand('wisdom')
-      .listen(((message) => teledart.replyMessage(message, 'Небо зелёное')));
+    .onCommand('wisdom')
+    .listen(((message) => teledart.replyMessage(message, 'Небо зелёное')));
   teledart
-      .onCommand('selfie')
-      .listen(((message) => teledart.replyMessage(message, 'Небо зелёное'))); // TODO: Send photos
+    .onCommand('selfie')
+    .listen(((message) => teledart.replyMessage(message, 'Здесь мы должны отправлять вам ФОТО')));
   teledart
     .onCommand("start")
-    .listen((mes) => teledart.replyMessage(mes, "hello, ${mes.from.first_name}"));
+    .listen((message) => teledart.replyMessage(message, "hello, ${message.from.first_name}"));
   teledart
-      .onMessage()
-      .listen((mes){
-	bool flag = true;
-	String text = mes.text;
-	text.codeUnits.forEach((char){
-	    if (!charachters.contains(char)){
-		flag = false;
-	    }
-	});
-	print(text.codeUnits);
-	if (flag){
-	    String data = json.encode({"label": "text", "text":text});
-	    var resp = PostReq(data);
-	    resp.then((txt) => teledart.replyMessage(mes, txt));
-	}
+    .onMessage()
+    .listen((message){
+      bool isMessageAllowed = true;
+      String text = message.text;
+      text.codeUnits.forEach((char){
+        if (!allwedCharacters.contains(char)){
+          isMessageAllowed = false;
+        }
       });
+      if (isMessageAllowed){
+        String data = json.encode({"label": "text", "text":text});
+        var resp = PostReq(url, data);
+        resp.then((txt) => teledart.replyMessage(message, txt));
+      }});
 }
 
-Future<String> PostReq(String data) async {
-    var url = "http://172.20.22.87:5000";
-    var response = await http.post(url, body: data);
-    Map resp = json.decode(response.body);
-    return resp["text"];
-}
